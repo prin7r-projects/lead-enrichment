@@ -10,6 +10,11 @@ services:
       - "3000"
     env_file:
       - .env
+    environment:
+      # The .env file's PORT=8080 is for the API; pin landing to 3000.
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      NODE_ENV: "production"
     labels:
       - "traefik.enable=true"
       # Path-based router: landing serves everything not matched by the API rule below.
@@ -30,6 +35,10 @@ services:
       - "8080"
     env_file:
       - .env
+    environment:
+      PORT: "8080"
+      HOSTNAME: "0.0.0.0"
+      NODE_ENV: "production"
     labels:
       - "traefik.enable=true"
       # Higher-priority router: matches /v1/* and /healthz on the same host.
