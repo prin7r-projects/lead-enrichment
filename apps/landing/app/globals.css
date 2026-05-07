@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Color tokens — see DESIGN.md §4 */
+    --surface: #0e1216;
+    --surface-raised: #161b22;
+    --surface-inverse: #f4f1ea;
+    --ink: #e8e6e0;
+    --ink-muted: #8e8b82;
+    --ink-inverse: #1a1f26;
+    --signal: #f2a03d;
+    --signal-shadow: #b16e1f;
+    --border: #22272e;
+    --border-inverse: #d7d3cb;
+    --ok: #7aa17a;
+    --warn: #d49a4a;
+    --err: #c26a5a;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply font-sans;
+    font-feature-settings:
+      "ss01" on,
+      "cv11" on;
+  }
+
+  ::selection {
+    background: var(--signal);
+    color: var(--surface);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-mono text-eyebrow uppercase text-ink-muted;
+  }
+  .display {
+    @apply font-display font-normal;
+    font-variation-settings: "opsz" 144;
+  }
+  .surface-raised {
+    background: var(--surface-raised);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .surface-inverse {
+    background: var(--surface-inverse);
+    color: var(--ink-inverse);
+  }
+
+  /* Code-sample syntax tokens — monochrome with one accent for keys */
+  .code-key {
+    color: var(--signal);
+  }
+  .code-string {
+    color: #c9c5b8;
+  }
+  .code-number {
+    color: #d49a4a;
+  }
+  .code-comment {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+  .code-punct {
+    color: var(--ink-muted);
+  }
+  .code-method {
+    color: var(--signal);
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .scroll-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+  }
+}

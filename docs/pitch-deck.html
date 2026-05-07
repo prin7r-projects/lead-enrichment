@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Triangulate — pitch deck</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --surface: #0E1216;
+      --surface-raised: #161B22;
+      --ink: #E8E6E0;
+      --ink-muted: #8E8B82;
+      --signal: #F2A03D;
+      --border: #22272E;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--surface); color: var(--ink); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { padding: 32px 24px; }
+    main { max-width: 1024px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+    .slide {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 56px 48px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      min-height: 540px;
+      position: relative;
+    }
+    .slide-num {
+      position: absolute; top: 20px; right: 24px;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px; color: var(--ink-muted); letter-spacing: 0.08em;
+    }
+    .eyebrow {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 12px;
+    }
+    h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(32px, 5vw, 56px);
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      margin: 0 0 20px;
+      font-weight: 400;
+    }
+    h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(22px, 3vw, 30px);
+      line-height: 1.15;
+      margin: 0 0 16px;
+      font-weight: 600;
+    }
+    p, li { font-size: 18px; line-height: 1.55; }
+    .accent { color: var(--signal); }
+    pre, code {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    pre {
+      background: #0B0E12;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; font-size: 12px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    .stat-row { display: flex; gap: 32px; margin-top: 24px; flex-wrap: wrap; }
+    .stat .num {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 36px; color: var(--signal); font-weight: 600;
+    }
+    .stat .lbl { color: var(--ink-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .footer-note {
+      text-align: center;
+      color: var(--ink-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      margin-top: 24px;
+      letter-spacing: 0.08em;
+    }
+    ul { padding-left: 22px; }
+    li + li { margin-top: 8px; }
+    .winner { color: var(--signal); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="slide">
+      <div class="slide-num">01 / 10</div>
+      <p class="eyebrow">Investor / partner deck</p>
+      <h1>Triangulate</h1>
+      <p style="font-size: 22px; max-width: 720px;">Per-credit lead enrichment with source-linked confidence. For backend and revops engineers who don't want a sales call to see the schema.</p>
+      <p style="margin-top: 32px; color: var(--ink-muted);">lead-enrichment.prin7r.com</p>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">02 / 10</div>
+      <p class="eyebrow">The problem</p>
+      <h2>P95</h2>
+      <ul>
+        <li>Apollo, ZoomInfo, Clearbit hide their schema behind a "book a demo" wall.</li>
+        <li>Their confidence scores have no source URLs — so the buyer cannot verify.</li>
+        <li>Bulk lists are 18 months stale on day one of delivery.</li>
+        <li>Annual contracts. $20k minimums. No published refund policy.</li>
+      </ul>
+      <p style="margin-top: 24px;"><strong>The cost.</strong> Engineering teams stitch together three vendors and build their own pipeline. RevOps teams send outbound to dead inboxes.</p>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">03 / 10</div>
+      <p class="eyebrow">The solution</p>
+      <h2>One credit, one verified record.</h2>
+      <pre><code>POST /v1/enrich
+{ "email": "jane.doe@stripe.com" }
+
+→ 720ms later →
+
+{
+  "person": {
+    "title": {
+      "value": "Engineering Manager",
+      "confidence": 0.94,
+      "sources": ["https://www.linkedin.com/..."]
+    }
+  },
+  "company": { ... },
+  "technographics": [ ... ],
+  "intent": { "hiring": { "openRoles": 142 } },
+  "meta": {
+    "freshness": { "ageDays": 3 },
+    "creditsRemaining": 9_873
+  }
+}</code></pre>
+      <p style="margin-top: 16px;">Every field carries a confidence score and at least one source URL.</p>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">04 / 10</div>
+      <p class="eyebrow">Why now</p>
+      <h2>Three tailwinds.</h2>
+      <ul>
+        <li><strong>Outbound is breaking.</strong> Open rates fell from 35% to 18% over four years; reply rates at all-time lows.</li>
+        <li><strong>Bulk-list market consolidating.</strong> Engineers want an alternative to two giant vendors.</li>
+        <li><strong>Stablecoin invoicing</strong> finally lets a small vendor accept paid pilots without six months of merchant-processor onboarding.</li>
+        <li><strong>Public data sources</strong> (SEC EDGAR, Companies House, Common Crawl, public LinkedIn) are richer in 2026 than ever — and accessible via well-behaved fetches at scale.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">05 / 10</div>
+      <p class="eyebrow">Market sizing</p>
+      <h2>$3.0B globally. We address $200M.</h2>
+      <ul>
+        <li>Global lead-enrichment market: ~$3.0B annually (2026).</li>
+        <li>Segment we serve: per-credit, per-record-on-demand — currently &lt;5% of the market, growing 35% YoY.</li>
+        <li>ICP size: ~30,000 B2B SaaS companies between Series A and Series C globally.</li>
+        <li>~10,000 of those run at least 1,000 enrichments/month.</li>
+        <li>1% of ICP at Team tier ($0.04/credit average): ~$4M ARR. 5% of ICP: ~$20M ARR.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">06 / 10</div>
+      <p class="eyebrow">Product wedge</p>
+      <h2>Five things we ship that competitors don't.</h2>
+      <ul>
+        <li><strong>Source-linked confidence.</strong> Every score includes at least one public source URL.</li>
+        <li><strong>Per-credit pricing.</strong> $49 for 1k credits. $399 for 10k. $2,499 for 100k. No contract.</li>
+        <li><strong>Latency-bounded.</strong> P50 720ms. P95 1.4s. Published methodology.</li>
+        <li><strong>API-first.</strong> No UI for the enriched data. You build your own. Stable JSON schema.</li>
+        <li><strong>Freshness on every response.</strong> `meta.freshness.ageDays` tells you how stale a record is. Refresh per-record, on demand.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">07 / 10</div>
+      <p class="eyebrow">Competitive landscape</p>
+      <h2>The only vendor that wins all four columns.</h2>
+      <table>
+        <thead>
+          <tr><th>Vendor</th><th>Schema</th><th>$/record</th><th>Refund</th><th>Sources</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ZoomInfo</td><td>No</td><td>$0.08–$0.20</td><td>Case-by-case</td><td>No</td></tr>
+          <tr><td>Apollo (Pro)</td><td>Partial</td><td>$0.06–$0.12</td><td>Case-by-case</td><td>No</td></tr>
+          <tr><td>Clearbit-Reveal</td><td>Partial</td><td>$0.10</td><td>Case-by-case</td><td>No</td></tr>
+          <tr><td>Lusha</td><td>Yes</td><td>$0.05</td><td>Case-by-case</td><td>No</td></tr>
+          <tr><td>Cognism</td><td>No</td><td>$0.10</td><td>Case-by-case</td><td>No</td></tr>
+          <tr class="winner"><td>Triangulate</td><td>Yes</td><td>$0.025–$0.049</td><td>Prorated 30-day</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">08 / 10</div>
+      <p class="eyebrow">Business model & traction</p>
+      <h2>Three credit packs. PLG motion. 85%+ gross margin.</h2>
+      <div class="grid-2">
+        <div>
+          <p><strong>Pricing.</strong></p>
+          <ul>
+            <li>Starter — 1,000 credits, $49</li>
+            <li>Team — 10,000 credits, $399</li>
+            <li>Scale — 100,000 credits, $2,499</li>
+          </ul>
+        </div>
+        <div>
+          <p><strong>Wave 2 (Day 0 → 90).</strong></p>
+          <ul>
+            <li>25 paying customers</li>
+            <li>$5,000 MRR</li>
+            <li>1 Scale-tier paid pilot</li>
+          </ul>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num">$160</div><div class="lbl">Avg pack</div></div>
+        <div class="stat"><div class="num">85%</div><div class="lbl">Gross margin</div></div>
+        <div class="stat"><div class="num">&lt;30d</div><div class="lbl">Payback</div></div>
+      </div>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">09 / 10</div>
+      <p class="eyebrow">Roadmap</p>
+      <h2>From contract to coverage.</h2>
+      <ul>
+        <li><strong>Wave 2 (now).</strong> Landing, API contract, NOWPayments checkout, deterministic enrichment stub.</li>
+        <li><strong>Wave 3 (Q3 2026).</strong> Real source-layer for firmographics + decision-makers. SDK on npm. Postman collection.</li>
+        <li><strong>Wave 4 (Q4 2026).</strong> Technographics. Intent signals. SOC-2 Type I. Fiat-on-ramp via NOWPayments partner.</li>
+        <li><strong>Wave 5 (Q1 2027).</strong> Webhook-based bulk. Free tier (50 credits/month). Public benchmarks dashboard.</li>
+        <li><strong>Wave 6 (Q2 2027).</strong> SOC-2 Type II. EU residency. Custom enterprise contracts.</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <div class="slide-num">10 / 10</div>
+      <p class="eyebrow">Ask</p>
+      <h2>The proof is in the response.</h2>
+      <ul>
+        <li><strong>Customers</strong> — Pay $49 to start. Email founder@triangulate.dev for a 50-credit free pilot.</li>
+        <li><strong>Partners</strong> — Hightouch, Census, Inngest — let's ship a co-authored integration recipe.</li>
+        <li><strong>Investors</strong> — Not raising in Wave 2. Revisit at $100k MRR.</li>
+      </ul>
+      <pre style="margin-top: 24px;"><code>curl -X POST https://lead-enrichment.prin7r.com/v1/enrich \
+  -H 'authorization: Bearer YOUR_KEY' \
+  -d '{"email":"someone@somecompany.com"}'</code></pre>
+    </section>
+
+    <p class="footer-note">© 2026 Triangulate · Verified leads, source-linked, in under 1.5 seconds.</p>
+  </main>
+</body>
+</html>

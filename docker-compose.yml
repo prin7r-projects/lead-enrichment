@@ -1,0 +1,40 @@
+services:
+  landing:
+    build:
+      context: .
+      dockerfile: Dockerfile.landing
+    image: triangulate-landing:latest
+    container_name: triangulate-landing
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      # Path-based router: landing serves everything not matched by the API rule below.
+      - "traefik.http.routers.lead-enrichment-landing.rule=Host(`lead-enrichment.prin7r.com`)"
+      - "traefik.http.routers.lead-enrichment-landing.entrypoints=websecure"
+      - "traefik.http.routers.lead-enrichment-landing.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lead-enrichment-landing.priority=1"
+      - "traefik.http.services.lead-enrichment-landing.loadbalancer.server.port=3000"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: triangulate-api:latest
+    container_name: triangulate-api
+    restart: unless-stopped
+    expose:
+      - "8080"
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      # Higher-priority router: matches /v1/* and /healthz on the same host.
+      - "traefik.http.routers.lead-enrichment-api.rule=Host(`lead-enrichment.prin7r.com`) && (PathPrefix(`/v1/`) || Path(`/healthz`))"
+      - "traefik.http.routers.lead-enrichment-api.entrypoints=websecure"
+      - "traefik.http.routers.lead-enrichment-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lead-enrichment-api.priority=10"
+      - "traefik.http.services.lead-enrichment-api.loadbalancer.server.port=8080"
