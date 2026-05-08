@@ -15,7 +15,8 @@ import { consumeCredit, getCreditUsage, logCacheHit, grantCredits } from "./ledg
 import { checkRateLimit } from "./rate-limit/index.js";
 import { buildCacheKey, getCached, setCached } from "./cache/index.js";
 import { migrate } from "./db/migrate.js";
-import { checkConnection } from "./db/client.js";
+import { checkConnection, sql } from "./db/client.js";
+import { dispatchWebhook } from "./webhooks/dispatch.js";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -171,7 +172,8 @@ const enrichBody = z
       .optional(),
     firstName: z.string().min(1).max(80).optional(),
     lastName: z.string().min(1).max(80).optional(),
-    company: z.string().min(1).max(200).optional()
+    company: z.string().min(1).max(200).optional(),
+    webhookUrl: z.string().url().max(500).optional()
   })
   .refine(
     (v) => Boolean(v.email) || Boolean(v.domain) || Boolean(v.firstName && v.lastName && v.company),
@@ -327,6 +329,28 @@ app.post(
       creditsRemaining: balanceAfter
     };
 
+    // ── Webhook dispatch (S3) ── fire-and-forget
+    if (body.webhookUrl) {
+      dispatchWebhook({
+        url: body.webhookUrl,
+        payload: response as unknown as Record<string, unknown>,
+        secret: auth.keyId, // API key hash as shared secret
+        correlationId
+      }).then(result => {
+        if (!result.ok) {
+          console.error("[WEBHOOK] Dispatch failed:", {
+            webhookUrl: body.webhookUrl,
+            correlationId,
+            attempts: result.attempts,
+            lastStatus: result.lastStatus,
+            lastError: result.lastError
+          });
+        }
+      }).catch(err => {
+        console.error("[WEBHOOK] Dispatch error:", err);
+      });
+    }
+
     return c.json(response, 200);
   }
 );
@@ -351,6 +375,103 @@ app.get("/v1/credits", async (c) => {
   }
 
   return c.json(usage);
+});
+
+// ─── GET /v1/api-keys ────────────────────────────────────
+
+app.get("/v1/api-keys", async (c) => {
+  const auth = c.get("auth");
+
+  const rows = await sql`
+    SELECT id, prefix, label, status, created_at, last_used_at
+    FROM api_keys
+    WHERE customer_id = ${auth.customerId}
+    ORDER BY created_at DESC
+  `;
+
+  const keys = (rows as Array<Record<string, unknown>>).map(r => ({
+    id: r.id as string,
+    prefix: r.prefix as string,
+    label: r.label as string,
+    status: r.status as string,
+    createdAt: (r.createdAt as Date).toISOString(),
+    lastUsedAt: r.lastUsedAt ? (r.lastUsedAt as Date).toISOString() : null
+  }));
+
+  return c.json({ keys });
+});
+
+// ─── POST /v1/api-keys ───────────────────────────────────
+
+const createKeyBody = z.object({
+  label: z.string().min(1).max(80).optional()
+});
+
+app.post(
+  "/v1/api-keys",
+  zValidator("json", createKeyBody, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        { error: "bad_request", message: "Invalid request body.", issues: result.error.issues },
+        400
+      );
+    }
+  }),
+  async (c) => {
+    const auth = c.get("auth");
+    const body = c.req.valid("json");
+    const { generateApiKey } = await import("./auth/index.js");
+
+    const { rawKey, prefix, hash } = generateApiKey();
+
+    const [row] = await sql`
+      INSERT INTO api_keys (customer_id, prefix, key_hash, label)
+      VALUES (${auth.customerId}, ${prefix}, ${hash}, ${body.label ?? "api-created"})
+      RETURNING id, created_at
+    `;
+
+    return c.json(
+      {
+        id: (row as Record<string, unknown>).id as string,
+        key: rawKey,
+        prefix,
+        label: body.label ?? "api-created",
+        createdAt: ((row as Record<string, unknown>).createdAt as Date).toISOString()
+      },
+      201
+    );
+  }
+);
+
+// ─── DELETE /v1/api-keys/:id ─────────────────────────────
+
+app.delete("/v1/api-keys/:id", async (c) => {
+  const auth = c.get("auth");
+  const keyId = c.req.param("id");
+
+  // Prevent self-revocation
+  if (keyId === auth.keyId) {
+    return c.json(
+      { error: "bad_request", message: "Cannot revoke the API key used for this request." },
+      400
+    );
+  }
+
+  const result = await sql`
+    UPDATE api_keys
+    SET status = 'revoked'
+    WHERE id = ${keyId} AND customer_id = ${auth.customerId} AND status = 'active'
+    RETURNING id
+  `;
+
+  if (result.length === 0) {
+    return c.json(
+      { error: "not_found", message: "API key not found or already revoked." },
+      404
+    );
+  }
+
+  return c.json({ ok: true, revoked: keyId });
 });
 
 // ─── Internal IPN endpoint ────────────────────────────────
