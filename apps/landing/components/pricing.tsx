@@ -10,30 +10,37 @@ import { cn } from "@/lib/utils";
 
 export function Pricing() {
   return (
-    <section id="pricing" className="border-b border-border" aria-labelledby="pricing-heading">
-      <div className="container py-20 md:py-24">
-        <div className="mb-12 max-w-2xl">
+    <section
+      id="pricing"
+      className="border-b border-border bg-platinum ambient-violet"
+      aria-labelledby="pricing-heading"
+    >
+      <div className="container py-24 md:py-32">
+        <div className="mb-14 max-w-2xl">
           <span className="eyebrow">Pricing</span>
-          <h2 id="pricing-heading" className="mt-3 text-h2 text-ink">
+          <h2
+            id="pricing-heading"
+            className="mt-4 display text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-midnight"
+          >
             One credit, one verified record.
           </h2>
-          <p className="mt-4 text-lead text-ink-muted">
+          <p className="mt-5 text-lead text-slate max-w-[55ch] leading-[1.5]">
             Three credit packs. No contract, no seats. Cached responses don't consume credits.
             Refund prorated to unused credits within 30 days, refunded to the same payment rail.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {PACKS.map((pack) => (
             <PricingCard key={pack.id} pack={pack} highlighted={pack.id === "team"} />
           ))}
         </div>
 
-        <p className="mt-10 text-caption text-ink-muted text-center">
+        <p className="mt-12 text-[14px] text-slate text-center">
           Above 100k credits/month?{" "}
           <a
             href="mailto:founder@triangulate.dev?subject=Triangulate%20enterprise%20enquiry"
-            className="text-signal underline-offset-4 hover:underline"
+            className="text-violet underline-offset-4 hover:underline"
           >
             Talk to the founder
           </a>{" "}
@@ -69,7 +76,9 @@ function PricingCard({
         return;
       }
       if (data.error === "missing_env") {
-        setError("Crypto checkout is paused while we finish onboarding. Email founder@triangulate.dev for a manual invoice.");
+        setError(
+          "Crypto checkout is paused while we finish onboarding. Email founder@triangulate.dev for a manual invoice."
+        );
         return;
       }
       setError(data.message ?? "Could not create invoice. Try again in a minute.");
@@ -83,8 +92,9 @@ function PricingCard({
   return (
     <Card
       className={cn(
-        "flex flex-col gap-6 p-7 relative",
-        highlighted && "ring-1 ring-signal/40"
+        "flex flex-col gap-7 p-8 relative bg-platinum",
+        highlighted &&
+          "border-violet/50 shadow-[0_0_0_1px_rgba(83,58,253,0.20),0_24px_48px_-24px_rgba(83,58,253,0.20)]"
       )}
     >
       {pack.ribbon ? (
@@ -93,28 +103,30 @@ function PricingCard({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1">
-        <span className="eyebrow">{pack.name}</span>
-        <p className="text-caption text-ink-muted">{pack.description}</p>
+      <div className="flex flex-col gap-2">
+        <span className="font-display text-[18px] font-medium text-midnight tracking-[-0.009em]">
+          {pack.name}
+        </span>
+        <p className="text-[13px] text-slate leading-snug">{pack.description}</p>
       </div>
 
       <div>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-[2.5rem] leading-none font-semibold text-ink">
+          <span className="font-display text-[clamp(2.25rem,3.6vw,2.75rem)] leading-none font-light text-midnight tracking-[-0.025em]">
             ${pack.priceUsd.toLocaleString()}
           </span>
-          <span className="font-mono text-caption text-ink-muted">USD · one-time</span>
+          <span className="font-mono text-[12px] text-slate">USD · one-time</span>
         </div>
-        <p className="mt-2 font-mono text-caption text-ink-muted">
+        <p className="mt-3 font-mono text-[12px] text-slate">
           {pack.credits.toLocaleString()} credits · {pack.perCredit} / credit
         </p>
       </div>
 
-      <ul className="flex flex-col gap-2.5 text-caption text-ink">
+      <ul className="flex flex-col gap-2.5 text-[14px] text-midnight">
         {pack.features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <Check className="mt-[2px] h-4 w-4 shrink-0 text-signal" aria-hidden />
-            <span className="text-ink-muted">{f}</span>
+          <li key={f} className="flex items-start gap-2.5">
+            <Check className="mt-[3px] h-4 w-4 shrink-0 text-violet" aria-hidden />
+            <span className="text-slate">{f}</span>
           </li>
         ))}
       </ul>
@@ -126,6 +138,7 @@ function PricingCard({
           onClick={startCheckout}
           disabled={loading}
           aria-label={`Pay ${pack.priceUsd} dollars with crypto for ${pack.name} pack`}
+          className="w-full"
         >
           {loading ? (
             <>
@@ -137,11 +150,11 @@ function PricingCard({
           )}
         </Button>
         {error ? (
-          <p role="alert" className="text-caption text-warn leading-snug">
+          <p role="alert" className="text-[12px] text-[#B45A09] leading-snug">
             {error}
           </p>
         ) : (
-          <p className="text-[11px] text-ink-muted leading-snug">
+          <p className="text-[12px] text-slate leading-snug">
             USDT-TRC20, USDC-Polygon, USDC-ERC20 via NOWPayments hosted invoice.
           </p>
         )}

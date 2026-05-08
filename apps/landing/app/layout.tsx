@@ -1,26 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Fraunces } from "next/font/google";
+import { Geist, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+// Söhne / Cabinet Grotesk substitute. Geist is the closest free, self-hostable
+// modern grotesque to Söhne; we ship weights 300 (display) and 400/500 (UI/body).
+const geist = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600"],
+  weight: ["300", "400", "500", "600"],
   display: "swap"
 });
 
-const mono = JetBrains_Mono({
+// Berkeley Mono substitute. IBM Plex Mono carries the same engineered, slab-flavoured
+// feel for code samples and tabular numbers without requiring a paid licence.
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   display: "swap"
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-  axes: ["opsz"]
 });
 
 export const metadata: Metadata = {
@@ -59,11 +56,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${mono.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${geist.variable} ${mono.variable}`}>
       <body>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-signal focus:px-3 focus:py-2 focus:font-mono focus:text-[11px] focus:uppercase focus:tracking-[0.08em] focus:text-[color:var(--surface)] focus:rounded-md"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:bg-violet focus:px-3 focus:py-2 focus:font-mono focus:text-[11px] focus:uppercase focus:tracking-[0.08em] focus:text-platinum focus:rounded-sm"
         >
           Skip to content
         </a>

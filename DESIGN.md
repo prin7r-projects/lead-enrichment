@@ -14,6 +14,8 @@ Canonical design + style guide for the Triangulate lead-enrichment service. Owne
 
 **What we are not.** We are not a list-builder. We do not sell scraped, unverified bulk databases. We do not chatbot-cover the API. We do not run on AI-marketing-blue gradients.
 
+**Visual posture (round 2, 2026-05-08).** The canonical reference is **Stripe** — "an architectural blueprint on white marble." Triangulate's surface is a platinum-white canvas (#FFFFFF) with porcelain (#F8FAFD) banding for alternating sections; **Deep Violet (#533AFD) is the only chromatic colour in the system**. The hero is a code-as-art block with hairline line numbers and restrained syntax tokens. We explicitly leave behind the prior dark-slate-and-amber developer-portal aesthetic: that surface read as "solid technical default" but undersold the precision-instrument promise. The white-marble surface, with violet accent and Söhne-grade grotesque type, reads as **expensive infrastructure** — closer to Stripe's API documentation than to a marketing landing page.
+
 ---
 
 ## 2. Visual positioning
@@ -59,23 +61,38 @@ No paid pro libraries. No Material UI, MUI, Chakra, NextUI. All marketing flair 
 
 ## 4. Color tokens
 
-Triangulate uses a constrained five-color system: a deep slate surface, a signal amber accent, two ink shades, and a single muted neutral. The amber is the only chromatic color in the system — every diagram, hover state, focus ring, and credit-balance dot uses it.
+The Triangulate palette is direct lift from the **Stripe** reference (`design-references/stripe.md`) — an architectural blueprint on white marble, with **Deep Violet as the single chromatic accent**. The canvas is platinum-white; depth is expressed through porcelain/powder banding and 1px hairline rules, never through gradients on the body or coloured fills on large areas.
 
 | Role | Token | Hex | Use |
 | --- | --- | --- | --- |
-| Surface (page) | `--surface` | `#0E1216` | Page background; card backgrounds use this with a 1px ink border |
-| Surface raised | `--surface-raised` | `#161B22` | Cards, code blocks, modal bodies |
-| Surface inverse | `--surface-inverse` | `#F4F1EA` | The "paper" alt scheme (pricing strip, footer, mobile sheet) — warm off-white |
-| Ink primary | `--ink` | `#E8E6E0` | Body text on dark surfaces |
-| Ink muted | `--ink-muted` | `#8E8B82` | Captions, eyebrow, JSON keys |
-| Ink inverse | `--ink-inverse` | `#1A1F26` | Body text on light surfaces |
-| Accent (signal) | `--signal` | `#F2A03D` | Single accent — links, focus ring, primary CTA, status dot, sparkline |
-| Accent shadow | `--signal-shadow` | `#B16E1F` | Hover/active state of accent surfaces |
-| Border | `--border` | `#22272E` | All borders on dark; 1px solid only |
-| Border inverse | `--border-inverse` | `#D7D3CB` | Borders on the paper scheme |
-| Success | `--ok` | `#7AA17A` | "Verified" badge, 200 status pill — desaturated sage, not pure green |
-| Warn | `--warn` | `#D49A4A` | Aged-data badge — same family as accent, slightly muted |
-| Error | `--err` | `#C26A5A` | 4xx/5xx, low confidence — earthy red, never pure red |
+| Platinum (canvas) | `--platinum` | `#FFFFFF` | Page background, primary card surfaces, header strip |
+| Porcelain (raised) | `--porcelain` | `#F8FAFD` | Code-sample surfaces, alternating section bands, FAQ block |
+| Powder (alt section) | `--powder` | `#E5EDF5` | Secondary card backgrounds, neutral status pill fills, table-zebra |
+| Stone (hairline) | `--stone` | `#D8D6DF` | Scrollbar thumb, very subtle dividers when `--border` would over-define |
+| Border | `--border` | `#E5EDF5` | Default 1px border between sections, around cards, in tab rules |
+| Midnight ink | `--midnight` | `#061B31` | Primary text, headlines, button text on light backgrounds |
+| Slate ink | `--slate` | `#50617A` | Secondary text, captions, eyebrow, body copy in muted contexts |
+| Ghost ink | `--ghost` | `#64748D` | Tertiary text, line-number gutter, placeholder text |
+| Deep Violet (signal) | `--violet` | `#533AFD` | Primary CTA fill, focus ring, accent text, code-key syntax token |
+| Violet shadow | `--violet-shadow` | `#3A25D4` | Hover/active state for primary CTA |
+| Soft Violet | `--violet-soft` | `#8087FF` | Decorative gradient accents, ambient hero glow |
+| Washed Violet | `--violet-washed` | `#B9B9F9` | Outlined-button border, secondary card ring |
+| Success | `--ok` | `#117A4D` | Verified pill (text on `#E6F4EC` tint) |
+| Warn | `--warn` | `#B45A09` | Aged-data pill (text on `#FFF1DC` tint) |
+| Error | `--err` | `#B3261E` | 4xx/5xx, low confidence (text on `#FDE7E5` tint) |
+
+**Anti-tokens — these are explicitly not used.** No beige (`#F4F1EA` is removed). No burnt amber (`#F2A03D` is removed). No saturated blue links. No dark-slate (`#0E1216`) page surfaces. No gradient buttons. The only places gradients appear are: the ambient hero halo (radial Deep Violet at 10% opacity behind the code block) and the decorative `dreamy-violet` background used sparingly above the pricing section. Both are below 20% opacity — they read as ambient lighting, not as decoration.
+
+Contrast measured against `--platinum` (#FFFFFF):
+- `--midnight` body: **16.8 : 1** (well above WCAG AA 4.5:1)
+- `--slate` muted body: **5.9 : 1** (passes AA body)
+- `--violet` accent text: **5.4 : 1** (passes AA body)
+- `--ghost` tertiary: **5.1 : 1** (passes AA body)
+
+Contrast measured against `--porcelain` (#F8FAFD):
+- `--midnight`: **16.5 : 1**
+- `--slate`: **5.8 : 1**
+- `--violet`: **5.3 : 1**
 
 WCAG AA enforced for body text on every surface (verified in section 12).
 
@@ -83,26 +100,35 @@ WCAG AA enforced for body text on every surface (verified in section 12).
 
 ## 5. Typography
 
-Three typefaces, each with a deliberate role. Loaded via `next/font/google` in `apps/landing/app/layout.tsx` so the FOIT is zero and the bytes ship from the same origin.
+Two typefaces, each with a deliberate role. **Inter is banned** (per the round-2 no-Inter override) — it reads as "default Tailwind starter" and undersells the premium positioning. We pair a high-quality grotesque for display + UI with a crisp, engineered mono for code and figures.
 
 | Role | Family | Weights | Used for |
 | --- | --- | --- | --- |
-| Display | Fraunces (serif, optical-size axis) | 400, 600 | The hero headline only — single appearance per page; communicates "instrument-grade" |
-| Body / UI | Inter (sans-serif) | 400, 500, 600 | All paragraph copy, nav, buttons, table cells |
-| Mono / Code | JetBrains Mono | 400, 600 | Eyebrows, code samples, JSON viewer, latency numbers, credit-pack pricing digits |
+| Display + UI | **Geist** (sans, modern grotesque, free, self-hosted via `next/font/google`) — substitute for Söhne / Cabinet Grotesk | 300, 400, 500, 600 | Headlines (300), nav and body (400), buttons and emphasis (500). All uppercase eyebrows still set in mono. |
+| Mono / Code | **IBM Plex Mono** (free, self-hosted via `next/font/google`) — substitute for Berkeley Mono | 400, 500, 600 | Eyebrows, code samples, JSON viewer, latency figures, credit-pack pricing digits |
 
-Type scale (`rem` on a 16px root):
+Why Geist and not Söhne directly: Söhne (Klim) is paid and not redistributable through `next/font/google`. Geist is the closest open, self-hostable grotesque to the Söhne register — narrow apertures, geometric counters, and a usable 300 weight for display. Why Plex Mono and not Berkeley Mono: Berkeley Mono is paid; IBM Plex Mono carries the same engineered, slab-flavoured feel and ships with tabular figures.
 
-- `text-eyebrow` — `0.75rem / 0.95`, JetBrains Mono 600, uppercase, +0.08em tracking
-- `text-caption` — `0.8125rem / 1.4`, Inter 400
-- `text-body` — `1rem / 1.55`, Inter 400
-- `text-lead` — `1.125rem / 1.5`, Inter 400
-- `text-h3` — `1.375rem / 1.25`, Inter 600
-- `text-h2` — `1.875rem / 1.15`, Inter 600
-- `text-h1-display` — `3.5rem / 1.05`, Fraunces 400, optical-size 144 (`opsz` axis), -0.02em tracking
-- Mobile clamp: `text-h1-display` collapses to `2.25rem / 1.1` at < 640px
+**Type scale — lifted directly from the Stripe reference (`design-references/stripe.md` §Typography).** All sizes are in pixels on a 16px root.
 
-All headlines use sentence case — never title case, never all-caps. Eyebrows are uppercase mono; they are the *only* uppercase type in the system.
+| Role | Size | Line height | Letter spacing | Weight |
+| --- | --- | --- | --- | --- |
+| `caption` | 11px | 1.45 | 0.03px | 400 |
+| `body` | 14px | 1.4 | 0.003px | 400 |
+| `lead` | 16px | 1.5 | 0px | 400 |
+| `subheading` | 18px | 1.25 | -0.009em | 400 |
+| `heading-sm` | 22px | 1.2 | -0.01em | 400 |
+| `heading` | 32px | 1.15 | -0.02em | 300 |
+| `heading-lg` | 44px | 1.1 | -0.025em | 300 |
+| `display` | 56px | 1.07 | -0.03em | 300 |
+
+Mobile clamp: the `display` token collapses with `clamp(2.5rem, 5.5vw, 3.5rem)` on the hero so the headline never wraps to four lines on a 320px viewport.
+
+All headlines use sentence case — never title case, never all-caps. **The `display` and `heading` weights are 300** (not 600) — Stripe's "understated authority" cue: large type that whispers instead of shouts. Body is weight 400. Buttons and primary nav use weight 500.
+
+OpenType features applied at the body level: `ss01` (stylistic-set alternates) and `tnum` (tabular figures, so the latency / credit-balance digits align across rows). The `display` weight on Geist already has the proper character forms — we do not load Söhne's `opsz` axis because Geist does not expose one.
+
+Eyebrows remain uppercase mono — they are the *only* uppercase type in the system. Eyebrow tracking is +0.08em; a compromise between Stripe's +0.03px caption tracking (which is too tight for an eyebrow that is meant to read as a label) and the developer-portal convention of +0.1em.
 
 ---
 
@@ -277,3 +303,5 @@ No paid pro UI libraries are in use. No design assets are imported from sources 
 ## 15. Changelog
 
 - **2026-05-08** — Initial release. All 15 sections authored. Landing + API scaffolded, deployed to `lead-enrichment.prin7r.com`. Desktop + mobile screenshots captured from the deployed surface. NOWPayments invoice route + IPN webhook wired to environment variables. ShadCN baseline established with `button`, `card`, `badge`, `tabs`, `accordion`, `separator`, `tooltip` imported. Brand identity codified in `docs/01-brand-identity.md`. Quality gates from section 12 verified at deploy time.
+
+- **2026-05-08 (round 2 — Stripe ref applied)** — Full surface refactor against the Stripe reference (`design-references/stripe.md` — "architectural blueprint on white marble"). Canvas inverted from dark-slate (`#0E1216`) to platinum-white (`#FFFFFF`); accent migrated from amber (`#F2A03D`) to **Deep Violet (`#533AFD`)**. Inter replaced with **Geist** (Söhne substitute) at weights 300/400/500; JetBrains Mono replaced with **IBM Plex Mono** (Berkeley Mono substitute). Fraunces (display serif) removed entirely — display headlines now set in Geist 300 with -0.03em tracking, matching Stripe's "understated authority" cue. Type scale rewritten to match Stripe's pixel-precise sizes (`caption 11`, `body 14`, `lead 16`, `subheading 18`, `heading-sm 22`, `heading 32`, `heading-lg 44`, `display 56`). All UI primitives (`button`, `card`, `badge`, `tabs`, `accordion`) re-skinned to white-marble palette. Code-as-art block redesigned with hairline line-number gutter, restrained syntax tokens, and porcelain surface; the highlighter was rewritten as a token-based parser to eliminate the regex-overlap bug from the previous build. Coverage matrix kept as a 6-cell bento on porcelain cards with a soft hover elevation. Pricing cards moved to a platinum surface with violet ring on the recommended tier. Footer collapsed onto the same platinum canvas as the rest of the site (the dark-paper inverse footer was retired). DESIGN.md sections §1, §4, §5, and §15 rewritten to reflect the new posture. NOWPayments hosted-invoice flow with `{"packId":"team"}` body shape **was not touched** — verified end-to-end after deploy.

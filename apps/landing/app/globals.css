@@ -4,30 +4,42 @@
 
 @layer base {
   :root {
-    /* Color tokens — see DESIGN.md §4 */
-    --surface: #0e1216;
-    --surface-raised: #161b22;
-    --surface-inverse: #f4f1ea;
-    --ink: #e8e6e0;
-    --ink-muted: #8e8b82;
-    --ink-inverse: #1a1f26;
-    --signal: #f2a03d;
-    --signal-shadow: #b16e1f;
-    --border: #22272e;
-    --border-inverse: #d7d3cb;
-    --ok: #7aa17a;
-    --warn: #d49a4a;
-    --err: #c26a5a;
+    /* Color tokens — see DESIGN.md §4. Stripe "architectural blueprint on white marble". */
+    --platinum: #ffffff;
+    --porcelain: #f8fafd;
+    --powder: #e5edf5;
+    --stone: #d8d6df;
+
+    --midnight: #061b31;
+    --slate: #50617a;
+    --ghost: #64748d;
+
+    --violet: #533afd;
+    --violet-shadow: #3a25d4;
+    --violet-soft: #8087ff;
+    --violet-washed: #b9b9f9;
+
+    --ok: #117a4d;
+    --warn: #b45a09;
+    --err: #b3261e;
+
+    --border: #e5edf5;
+    --border-inverse: #1f2a3a;
+
+    /* Typography fluid scale */
+    --tracking-display: -0.03em;
+    --tracking-heading-lg: -0.025em;
+    --tracking-heading: -0.02em;
   }
 
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
 
   html,
   body {
-    background: var(--surface);
-    color: var(--ink);
+    background: var(--platinum);
+    color: var(--midnight);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -37,16 +49,16 @@
     @apply font-sans;
     font-feature-settings:
       "ss01" on,
-      "cv11" on;
+      "tnum" on;
   }
 
   ::selection {
-    background: var(--signal);
-    color: var(--surface);
+    background: var(--violet);
+    color: var(--platinum);
   }
 
   *:focus-visible {
-    outline: 2px solid var(--signal);
+    outline: 2px solid var(--violet);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -65,55 +77,101 @@
 
 @layer components {
   .eyebrow {
-    @apply font-mono text-eyebrow uppercase text-ink-muted;
-  }
-  .display {
-    @apply font-display font-normal;
-    font-variation-settings: "opsz" 144;
-  }
-  .surface-raised {
-    background: var(--surface-raised);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  }
-  .surface-inverse {
-    background: var(--surface-inverse);
-    color: var(--ink-inverse);
+    @apply font-mono text-[11px] uppercase tracking-[0.08em] text-slate font-medium;
   }
 
-  /* Code-sample syntax tokens — monochrome with one accent for keys */
+  .display {
+    @apply font-display;
+    font-weight: 300;
+    letter-spacing: var(--tracking-display);
+  }
+
+  /* Hairline rule — used between sections + inside cards */
+  .hairline {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Card surfaces */
+  .surface-porcelain {
+    background: var(--porcelain);
+  }
+  .surface-powder {
+    background: var(--powder);
+  }
+  .surface-platinum {
+    background: var(--platinum);
+  }
+
+  /* Section ambient gradient — used behind hero / pricing for depth */
+  .ambient-violet {
+    background-image:
+      radial-gradient(900px 480px at 75% -10%, rgba(127, 125, 252, 0.18), rgba(255, 255, 255, 0) 55%),
+      radial-gradient(720px 380px at 5% 0%, rgba(83, 58, 253, 0.05), rgba(255, 255, 255, 0) 60%);
+  }
+
+  /* Code-as-art — refined Stripe-style syntax tokens on a near-white block */
   .code-key {
-    color: var(--signal);
+    color: #6f3ad9; /* deep violet (key) */
+    font-weight: 500;
   }
   .code-string {
-    color: #c9c5b8;
+    color: #1f6f4d; /* refined emerald */
   }
   .code-number {
-    color: #d49a4a;
+    color: #b45a09; /* burnt orange — restrained */
   }
   .code-comment {
-    color: var(--ink-muted);
+    color: var(--ghost);
     font-style: italic;
   }
   .code-punct {
-    color: var(--ink-muted);
+    color: var(--slate);
   }
   .code-method {
-    color: var(--signal);
+    color: var(--violet);
     font-weight: 600;
+  }
+  .code-type {
+    color: #1d4ed8;
+  }
+
+  /* Line numbers gutter for code-sample blocks */
+  .code-block {
+    counter-reset: code-line;
+  }
+  .code-line {
+    counter-increment: code-line;
+    display: block;
+    padding-left: 3.5rem;
+    position: relative;
+    min-height: 1.55em;
+  }
+  .code-line::before {
+    content: counter(code-line);
+    position: absolute;
+    left: 0;
+    width: 2.5rem;
+    padding-right: 0.75rem;
+    text-align: right;
+    color: var(--ghost);
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+    border-right: 1px solid var(--border);
+    margin-right: 0.75rem;
   }
 }
 
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--stone) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     height: 6px;
     width: 6px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: var(--stone);
     border-radius: 999px;
   }
 
@@ -127,5 +185,13 @@
   .scroll-fade-x {
     -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
     mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent 100%);
+  }
+
+  /* Hairline grid — Stripe blueprint motif */
+  .grid-marble {
+    background-image:
+      linear-gradient(to right, rgba(83, 58, 253, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(83, 58, 253, 0.04) 1px, transparent 1px);
+    background-size: 96px 96px;
   }
 }

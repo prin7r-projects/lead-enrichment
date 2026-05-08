@@ -57,32 +57,28 @@ console.log(lead.person.title.sources);    // -> ["https://www.linkedin.com/..."
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        aria-hidden
-        style={{
-          backgroundImage:
-            "radial-gradient(800px 400px at 80% -10%, rgba(242,160,61,0.06), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)"
-        }}
-      />
-      <div className="container py-16 md:py-24 lg:py-28">
-        <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+    <section className="relative overflow-hidden ambient-violet">
+      <div className="container py-20 md:py-28 lg:py-32">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-5 flex flex-col gap-7">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="signal">Live · v0.1</Badge>
               <Badge tone="ok">All systems green</Badge>
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-ink-muted">
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-slate">
                 Per-credit · USDT / USDC
               </span>
             </div>
 
-            <h1 className="display text-balance text-[clamp(2.25rem,5vw,3.5rem)] leading-[1.05]">
-              Verified leads, source-linked, in under 1.5 seconds.
+            <h1 className="display text-balance text-[clamp(2.5rem,5.5vw,3.5rem)] leading-[1.05] text-midnight">
+              Verified leads,
+              <br />
+              source-linked,
+              <br />
+              <span className="text-violet">in under 1.5 seconds.</span>
             </h1>
 
-            <p className="text-pretty text-lead text-ink-muted max-w-[44ch]">
-              Send <span className="font-mono text-ink">{`{ "email": "jane.doe@stripe.com" }`}</span>. Get
+            <p className="text-pretty text-lead text-slate max-w-[44ch]">
+              Send <span className="font-mono text-midnight">{`{ "email": "jane.doe@stripe.com" }`}</span>. Get
               back her title, role history, company funding stage, technographics, hiring intent — every
               field carrying a confidence score and at least one public source URL.
             </p>
@@ -99,12 +95,21 @@ export function Hero() {
               </Button>
             </div>
 
-            <p className="font-mono text-caption text-ink-muted">
+            <p className="font-mono text-[12px] text-slate">
               First curl in under 5 minutes. No portal. No OAuth.
             </p>
           </div>
 
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 relative">
+            {/* Subtle violet halo behind the code block — the "blueprint glow" motif */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-6 -z-10 rounded-2xl"
+              style={{
+                background:
+                  "radial-gradient(60% 60% at 60% 30%, rgba(83,58,253,0.10), rgba(255,255,255,0) 70%)"
+              }}
+            />
             <CodeSample
               ariaLabel="Triangulate enrichment request and response"
               tabs={[

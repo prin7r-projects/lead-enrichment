@@ -2,12 +2,17 @@ import { Building2, IdCard, Layers, Radar, Network, Fingerprint } from "lucide-r
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * Coverage matrix — refined Stripe-style bento grid. Six porcelain cards on a
+ * platinum canvas. Hairline borders, soft hover elevation, eyebrow + title +
+ * body + status pills (no garish badges).
+ */
 const CELLS = [
   {
     eyebrow: "01 · Firmographics",
     icon: Building2,
     title: "Company shape",
-    body: "Industry, employee band, HQ, funding stage and last round — all sourced from SEC, Companies House, and Crunchbase open snapshots.",
+    body: "Industry, employee band, HQ, funding stage and last round — sourced from SEC, Companies House, and Crunchbase open snapshots.",
     coverage: "94% NA · 81% EMEA",
     freshness: "28d"
   },
@@ -55,14 +60,17 @@ const CELLS = [
 
 export function CoverageMatrix() {
   return (
-    <section id="coverage" className="border-b border-border" aria-labelledby="coverage-heading">
-      <div className="container py-20 md:py-24">
-        <div className="mb-12 max-w-2xl">
+    <section id="coverage" className="border-b border-border bg-platinum" aria-labelledby="coverage-heading">
+      <div className="container py-24 md:py-32">
+        <div className="mb-14 max-w-2xl">
           <span className="eyebrow">What we return</span>
-          <h2 id="coverage-heading" className="mt-3 text-h2 text-ink">
+          <h2
+            id="coverage-heading"
+            className="mt-4 display text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-midnight"
+          >
             Six categories. One JSON. Six confidence scores.
           </h2>
-          <p className="mt-4 text-lead text-ink-muted">
+          <p className="mt-5 text-lead text-slate max-w-[55ch] leading-[1.5]">
             The schema is the hero. Every field on the response carries a confidence score and the
             public source we used to derive it.
           </p>
@@ -72,14 +80,16 @@ export function CoverageMatrix() {
           {CELLS.map((cell) => {
             const Icon = cell.icon;
             return (
-              <Card key={cell.title} className="flex flex-col gap-4 p-6">
+              <Card key={cell.title} className="flex flex-col gap-4 p-7">
                 <div className="flex items-center justify-between">
                   <span className="eyebrow">{cell.eyebrow}</span>
-                  <Icon className="h-4 w-4 text-ink-muted" aria-hidden />
+                  <Icon className="h-4 w-4 text-violet" aria-hidden />
                 </div>
-                <h3 className="text-h3 text-ink">{cell.title}</h3>
-                <p className="text-body text-ink-muted leading-relaxed">{cell.body}</p>
-                <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
+                <h3 className="text-heading-sm font-normal text-midnight tracking-[-0.01em]">
+                  {cell.title}
+                </h3>
+                <p className="text-[14px] text-slate leading-[1.55]">{cell.body}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-3">
                   <Badge tone="signal">{cell.coverage}</Badge>
                   <Badge tone="neutral">refresh · {cell.freshness}</Badge>
                 </div>

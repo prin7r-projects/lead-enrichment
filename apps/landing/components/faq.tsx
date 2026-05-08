@@ -37,19 +37,22 @@ const ITEMS = [
 
 export function Faq() {
   return (
-    <section id="faq" className="border-b border-border" aria-labelledby="faq-heading">
-      <div className="container py-20 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-12">
+    <section id="faq" className="border-b border-border bg-porcelain" aria-labelledby="faq-heading">
+      <div className="container py-24 md:py-32">
+        <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <span className="eyebrow">FAQ</span>
-            <h2 id="faq-heading" className="mt-3 text-h2 text-ink">
-              The questions engineers and operators ask first.
+            <h2
+              id="faq-heading"
+              className="mt-4 display text-[clamp(2rem,4vw,2.5rem)] leading-[1.1] text-midnight"
+            >
+              The questions engineers ask first.
             </h2>
-            <p className="mt-4 text-body text-ink-muted">
+            <p className="mt-5 text-[15px] text-slate leading-[1.55]">
               Don't see your question?{" "}
               <a
                 href="mailto:founder@triangulate.dev"
-                className="text-signal underline-offset-4 hover:underline"
+                className="text-violet underline-offset-4 hover:underline"
               >
                 Email the founder
               </a>{" "}

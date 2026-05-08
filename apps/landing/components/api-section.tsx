@@ -74,38 +74,48 @@ export async function POST(req: Request) {
 
 export function ApiSection() {
   return (
-    <section id="api" className="border-b border-border" aria-labelledby="api-heading">
-      <div className="container py-20 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+    <section
+      id="api"
+      className="border-b border-border bg-porcelain"
+      aria-labelledby="api-heading"
+    >
+      <div className="container py-24 md:py-32">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-4">
             <span className="eyebrow">Drop-in API</span>
-            <h2 id="api-heading" className="mt-3 text-h2 text-ink">
+            <h2
+              id="api-heading"
+              className="mt-4 display text-[clamp(2rem,4vw,2.75rem)] leading-[1.1] text-midnight"
+            >
               No portal. No OAuth. Five-line first integration.
             </h2>
-            <p className="mt-4 text-body text-ink-muted">
+            <p className="mt-5 text-[15px] text-slate leading-[1.55]">
               The schema below is the same JSON the production endpoint returns. Pin our
-              version header (<span className="font-mono">X-Triangulate-Version: 2026-05</span>)
-              when you're ready to lock it down.
+              version header (
+              <span className="font-mono text-midnight text-[13px]">
+                X-Triangulate-Version: 2026-05
+              </span>
+              ) when you're ready to lock it down.
             </p>
-            <ul className="mt-6 flex flex-col gap-3 text-caption text-ink-muted">
+            <ul className="mt-7 flex flex-col gap-3 text-[14px] text-slate">
               <li className="flex gap-2">
-                <span className="text-signal font-mono">→</span> Stable JSON schema, semver-pinned.
+                <span className="text-violet font-mono">→</span> Stable JSON schema, semver-pinned.
               </li>
               <li className="flex gap-2">
-                <span className="text-signal font-mono">→</span> Deterministic responses on identical input.
+                <span className="text-violet font-mono">→</span> Deterministic responses on identical input.
               </li>
               <li className="flex gap-2">
-                <span className="text-signal font-mono">→</span> Cache hits don't consume credits.
+                <span className="text-violet font-mono">→</span> Cache hits don't consume credits.
               </li>
               <li className="flex gap-2">
-                <span className="text-signal font-mono">→</span> Correlation id on every response.
+                <span className="text-violet font-mono">→</span> Correlation id on every response.
               </li>
             </ul>
           </div>
 
-          <div className="lg:col-span-8 flex flex-col gap-8">
+          <div className="lg:col-span-8 flex flex-col gap-10">
             <div>
-              <h3 className="mb-3 eyebrow text-ink">01 · Authentication</h3>
+              <h3 className="mb-3 eyebrow text-violet">01 · Authentication</h3>
               <CodeSample
                 ariaLabel="Authentication code samples"
                 tabs={[{ value: "auth", label: "cURL", language: "bash", source: AUTH_TAB }]}
@@ -113,7 +123,7 @@ export function ApiSection() {
             </div>
 
             <div>
-              <h3 className="mb-3 eyebrow text-ink">02 · Single enrichment</h3>
+              <h3 className="mb-3 eyebrow text-violet">02 · Single enrichment</h3>
               <CodeSample
                 ariaLabel="Single enrichment request and response"
                 tabs={[
@@ -124,7 +134,7 @@ export function ApiSection() {
             </div>
 
             <div>
-              <h3 className="mb-3 eyebrow text-ink">03 · Webhook callback (optional)</h3>
+              <h3 className="mb-3 eyebrow text-violet">03 · Webhook callback (optional)</h3>
               <CodeSample
                 ariaLabel="Webhook callback handler"
                 tabs={[{ value: "wh", label: "Node / Bun", language: "ts", source: WEBHOOK_SAMPLE }]}

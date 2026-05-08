@@ -2,16 +2,21 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/**
+ * Status pills. Restrained on a white canvas: low-saturation fills with
+ * matching ink-on-tint instead of bright outlines on a dark surface.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5 font-mono text-[11px] uppercase tracking-[0.08em] font-semibold leading-none",
+  "inline-flex items-center gap-1.5 rounded-sm px-2 py-[3px] font-mono text-[11px] uppercase tracking-[0.08em] font-medium leading-none",
   {
     variants: {
       tone: {
-        neutral: "bg-surface-raised text-ink-muted border border-border",
-        signal: "bg-signal/10 text-signal border border-signal/30",
-        ok: "bg-ok/10 text-ok border border-ok/30",
-        warn: "bg-warn/10 text-warn border border-warn/30",
-        err: "bg-err/10 text-err border border-err/30"
+        neutral: "bg-powder text-slate",
+        signal: "bg-violet/10 text-violet",
+        ok: "bg-[#E6F4EC] text-[#117A4D]",
+        warn: "bg-[#FFF1DC] text-[#B45A09]",
+        err: "bg-[#FDE7E5] text-[#B3261E]",
+        outline: "bg-transparent text-violet border border-violet-washed"
       }
     },
     defaultVariants: { tone: "neutral" }

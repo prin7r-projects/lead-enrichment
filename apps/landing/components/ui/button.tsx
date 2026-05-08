@@ -3,22 +3,28 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+/**
+ * Stripe-style buttons. Filled = Deep Violet, Ghost = transparent text,
+ * Outlined = washed-violet border. 4px radius (per Stripe spec). Tight padding.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-colors duration-150 ease-out disabled:pointer-events-none disabled:opacity-50 select-none",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium transition-all duration-150 ease-out disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     variants: {
       variant: {
         primary:
-          "bg-signal text-[color:var(--surface)] hover:bg-signal-shadow hover:-translate-y-px transition-transform",
+          "bg-violet text-platinum hover:bg-violet-shadow hover:-translate-y-px hover:shadow-[0_8px_20px_-8px_rgba(83,58,253,0.45)]",
         secondary:
-          "bg-transparent text-ink border border-border hover:bg-surface-raised hover:border-ink-muted",
-        ghost: "bg-transparent text-ink hover:text-signal",
-        link: "bg-transparent text-signal underline-offset-4 hover:underline px-0"
+          "bg-platinum text-midnight border border-violet-washed hover:border-violet hover:text-violet",
+        ghost:
+          "bg-transparent text-midnight hover:text-violet",
+        link:
+          "bg-transparent text-violet underline-offset-4 hover:underline px-0"
       },
       size: {
-        sm: "h-9 px-3 text-caption",
-        md: "h-11 px-5 text-body",
-        lg: "h-12 px-6 text-body"
+        sm: "h-9 px-4 text-[14px]",
+        md: "h-11 px-5 text-[14px]",
+        lg: "h-12 px-6 text-[14px]"
       }
     },
     defaultVariants: {
