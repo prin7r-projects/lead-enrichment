@@ -243,6 +243,8 @@ app.post(
         latencyMs: 0
       }).catch(err => console.error("[CACHE] Failed to log cache hit:", err));
 
+      // Merge cached slices + inject credit info
+      const cachedMeta = (cached.data as Record<string, unknown>).meta as Record<string, unknown> | undefined;
       return c.json(
         {
           ...cached.data,
@@ -254,7 +256,7 @@ app.post(
             cached: true
           },
           meta: {
-            ...((cached.data as Record<string, unknown>).meta as Record<string, unknown> ?? {}),
+            ...(cachedMeta ?? {}),
             creditsRemaining: auth.balance,
             cached: true
           }
@@ -285,7 +287,9 @@ app.post(
       firmographic: { company: response.company },
       decisionMaker: { person: response.person },
       technographic: { technographics: response.technographics },
-      intent: { intent: response.intent }
+      intent: { intent: response.intent },
+      meta: { meta: response.meta },
+      contact: { contactTriangulation: response.contactTriangulation }
     });
 
     // ── Credit consumption ──
