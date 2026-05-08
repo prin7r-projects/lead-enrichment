@@ -51,61 +51,19 @@
 
 ---
 
-## Phase 3: Webhook-fired enrichment (S3) + Dashboard foundation
+## Phase 3: Webhook-fired enrichment (S3) + Dashboard foundation ✅ DONE
 
-**Goal**: CRM integrator path (HubSpot webhook → enrich → write back). Basic dashboard for credit viewing.
+**Status**: ✅ Implemented + verified 2026-05-08.
 
-### Tasks
+**Verification**:
+- Webhook callback: `POST /v1/enrich` accepts optional `webhookUrl`, fires HMAC-SHA512 signed POST with 1s/5s/25s exponential backoff
+- HubSpot integration: Cloudflare Worker reference in `apps/api/examples/hubspot-contact-enrich.js`
+- Dashboard: `/dashboard?token=<api_key>` — credit balance with progress bar, purchases table, usage table (cache-hit badges), API key CRUD
+- API key endpoints: `GET/POST/DELETE /v1/api-keys` — customer-scoped, raw key returned once, self-revocation blocked
+- Credit nudge: `GET /v1/credits` returns nudge at <30% balance; dashboard renders upgrade banner
+- API version: `0.3.0`, DNS: `lead-enrichment.prin7r.com` → VPS `144.91.94.91`
 
-#### 3.1 Webhook callback infrastructure
-
-- [ ] `POST /v1/enrich` supports optional `webhookUrl` in request body:
-  ```json
-  { "email": "...", "webhookUrl": "https://my-crm.example.com/hooks/triangulate" }
-  ```
-- [ ] After enrichment completes, fire `POST <webhookUrl>` with enrichment response + HMAC-SHA512 signature
-- [ ] Retry: 3 attempts with exponential backoff (1s, 5s, 25s)
-- [ ] `apps/api/src/webhooks/`:
-  - `dispatch.ts` — POST to customer URL with signature
-
-**Verify**: Enrich with webhook URL → customer endpoint receives POST with signed payload.
-
-#### 3.2 HubSpot integration example
-
-- [ ] `apps/api/examples/hubspot-contact-enrich.js`:
-  - Cloudflare Worker template that:
-    1. Receives HubSpot `contact.creation` webhook
-    2. Calls `POST /v1/enrich` with contact email
-    3. Maps Triangulate fields to HubSpot custom properties
-    4. Calls `PATCH https://api.hubapi.com/crm/v3/objects/contacts/{id}`
-
-**Verify**: Example documented and runnable. Not deployed — reference implementation.
-
-#### 3.3 Minimal dashboard (credit view only)
-
-- [ ] `apps/landing/app/dashboard/`:
-  - `page.tsx` — credit balance card, recent usage table, API key list
-  - `layout.tsx` — minimal nav (Credits, API Keys, Billing)
-  - Auth: email magic-link via token in query param
-- [ ] Dashboard consumes `GET /v1/credits` and `GET /v1/api-keys`
-
-**Verify**: Visit `/dashboard?token=...` → see credit balance, usage history, API keys.
-
-#### 3.4 Credit balance nudge (S10)
-
-- [ ] When `GET /v1/credits` returns balance < 30% of original purchase for Starter tier, include:
-  ```json
-  { "nudge": { "threshold": 300, "remaining": 250, "message": "You've used 75% of your Starter credits. Upgrade to Team for 19% off per credit.", "upgradeUrl": "/?pricing" } }
-  ```
-- [ ] Dashboard shows banner when nudge active
-
-**Verify**: Burn credits to 250 on Starter → dashboard shows upgrade nudge.
-
-**Phase 3 DoD**:
-- Webhook callback fires from enrich endpoint
-- HubSpot integration example documented
-- Minimal dashboard shows credits + usage + API keys
-- Upgrade nudge fires at 70% consumed
+**Stories covered**: S3, S7, S10, A4
 
 ---
 

@@ -69,6 +69,9 @@ services:
       - "traefik.http.routers.lead-enrichment-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lead-enrichment-api.priority=10"
       - "traefik.http.services.lead-enrichment-api.loadbalancer.server.port=8080"
+    volumes:
+      - batch_data:/data/batch
 
 volumes:
   pgdata:
+  batch_data:

@@ -1,6 +1,7 @@
 /**
  * Triangulate API — Hono + Bun server.
  *
+ * Phase 4: Batch enrichment (CSV upload, worker, job status, download).
  * Phase 3: Webhook-fired enrichment, API key management, dashboard foundation.
  * Phase 1-2: Auth, credit ledger, rate limiting, caching, GDPR, PII purge, IPN.
  */
@@ -17,6 +18,8 @@ import { buildCacheKey, getCached, setCached } from "./cache/index.js";
 import { migrate } from "./db/migrate.js";
 import { checkConnection, sql } from "./db/client.js";
 import { dispatchWebhook } from "./webhooks/dispatch.js";
+import { startBatchWorker } from "./batch/worker.js";
+import { parseCsv, validateIdentifierColumns, rowToEnrichInput } from "./batch/csv.js";
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -57,7 +60,7 @@ app.get("/healthz", (c) =>
   c.json({
     status: "ok",
     service: "triangulate-api",
-    version: "0.3.0",
+    version: "0.4.0",
     ts: Date.now()
   })
 );
@@ -474,6 +477,223 @@ app.delete("/v1/api-keys/:id", async (c) => {
   return c.json({ ok: true, revoked: keyId });
 });
 
+// ─── Batch enrichment endpoints (Phase 4) ────────────────
+
+const BATCH_DIR = process.env.BATCH_STORAGE_DIR ?? "/data/batch";
+
+app.post("/v1/enrich/batch", async (c) => {
+  const auth = c.get("auth");
+
+  // Team tier minimum for batch
+  if (auth.tier === "starter") {
+    return c.json(
+      { error: "bad_request", message: "Batch enrichment requires Team tier or higher." },
+      400
+    );
+  }
+
+  const formData = await c.req.formData().catch(() => null);
+  if (!formData) {
+    return c.json(
+      { error: "bad_request", message: "Expected multipart/form-data with a 'file' field." },
+      400
+    );
+  }
+
+  const file = formData.get("file");
+  if (!file || !(file instanceof File)) {
+    return c.json(
+      { error: "bad_request", message: "Missing 'file' field in form data." },
+      400
+    );
+  }
+
+  // Validate file extension
+  if (!file.name.toLowerCase().endsWith(".csv")) {
+    return c.json(
+      { error: "bad_request", message: "File must be a CSV." },
+      400
+    );
+  }
+
+  // Max file size: 50MB
+  const MAX_SIZE = 50 * 1024 * 1024;
+  if (file.size > MAX_SIZE) {
+    return c.json(
+      { error: "too_large", message: "File exceeds 50MB limit." },
+      413
+    );
+  }
+
+  let content: string;
+  try {
+    content = await file.text();
+  } catch {
+    return c.json(
+      { error: "bad_request", message: "Failed to read CSV file." },
+      400
+    );
+  }
+
+  // Parse CSV
+  let parsed;
+  try {
+    parsed = parseCsv(content);
+  } catch (err) {
+    return c.json(
+      { error: "bad_request", message: err instanceof Error ? err.message : "Failed to parse CSV." },
+      400
+    );
+  }
+
+  // Validate identifier column
+  const idType = validateIdentifierColumns(parsed.headers);
+  if (!idType) {
+    return c.json(
+      {
+        error: "bad_request",
+        message: "CSV missing required identifier column. Must include email, domain, or firstName+lastName+company.",
+        headers: parsed.headers
+      },
+      400
+    );
+  }
+
+  const rowCount = parsed.rows.length;
+
+  // Row limit per tier
+  const maxRows = auth.tier === "scale" ? 100_000 : 10_000;
+  if (rowCount > maxRows) {
+    return c.json(
+      {
+        error: "bad_request",
+        message: `Row count ${rowCount} exceeds ${auth.tier} tier limit of ${maxRows}.`
+      },
+      400
+    );
+  }
+
+  // Credit balance check
+  if (auth.balance < rowCount) {
+    return c.json(
+      {
+        error: "no_credits",
+        message: `Insufficient credits. Need ${rowCount}, have ${auth.balance}.`
+      },
+      402
+    );
+  }
+
+  // Store CSV on local filesystem (S3-compat placeholder)
+  const { mkdirSync } = await import("node:fs");
+  mkdirSync(BATCH_DIR, { recursive: true });
+
+  const jobId = `job_${makeCorrelationId()}`;
+  const csvPath = `${BATCH_DIR}/${jobId}_input.csv`;
+  const webhookUrl = (formData.get("webhookUrl") as string) || null;
+
+  // Write CSV
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(csvPath, content, "utf-8");
+
+  // Create enrichment job
+  const [job] = await sql`
+    INSERT INTO enrichment_jobs (id, account_id, status, row_count, csv_path, webhook_url)
+    VALUES (${jobId}, ${auth.accountId}, 'queued', ${rowCount}, ${csvPath}, ${webhookUrl ?? null})
+    RETURNING id, created_at
+  `;
+
+  // Estimate duration: ~50 RPS + overhead
+  const estimatedDurationSec = Math.ceil(rowCount / 50) + 10;
+
+  return c.json(
+    {
+      jobId,
+      status: "queued",
+      rowCount,
+      estimatedCredits: rowCount,
+      estimatedDurationSec,
+      createdAt: (job as Record<string, unknown>).createdAt
+    },
+    202
+  );
+});
+
+app.get("/v1/jobs/:id", async (c) => {
+  const auth = c.get("auth");
+  const jobId = c.req.param("id");
+
+  const [job] = await sql`
+    SELECT id, account_id, status, row_count, completed_rows, failed_rows,
+           credits_consumed, result_path, webhook_url, webhook_fired,
+           created_at, started_at, completed_at
+    FROM enrichment_jobs
+    WHERE id = ${jobId} AND account_id = ${auth.accountId}
+  `;
+
+  if (!job) {
+    return c.json({ error: "not_found", message: "Job not found." }, 404);
+  }
+
+  const j = job as Record<string, unknown>;
+  const status = j.status as string;
+  const result: Record<string, unknown> = {
+    jobId: j.id,
+    status,
+    rowCount: j.rowCount,
+    completedRows: j.completedRows,
+    failedRows: j.failedRows,
+    estimatedCredits: j.rowCount,
+    creditsConsumed: j.creditsConsumed,
+    createdAt: j.createdAt,
+    completedAt: j.completedAt ?? null,
+    webhookFired: j.webhookFired
+  };
+
+  if (status === "completed" || status === "partial") {
+    result.downloadUrl = `https://lead-enrichment.prin7r.com/v1/jobs/${jobId}/download`;
+  }
+
+  return c.json(result);
+});
+
+app.get("/v1/jobs/:id/download", async (c) => {
+  const auth = c.get("auth");
+  const jobId = c.req.param("id");
+
+  const [job] = await sql`
+    SELECT id, status, result_path
+    FROM enrichment_jobs
+    WHERE id = ${jobId} AND account_id = ${auth.accountId}
+  `;
+
+  if (!job || !(job as Record<string, unknown>).resultPath) {
+    return c.json({ error: "not_found", message: "Results not available." }, 404);
+  }
+
+  const status = (job as Record<string, unknown>).status as string;
+  if (status !== "completed" && status !== "partial") {
+    return c.json(
+      { error: "not_ready", message: `Job status is '${status}'. Results not yet available.` },
+      409
+    );
+  }
+
+  const resultPath = (job as Record<string, unknown>).resultPath as string;
+  const file = Bun.file(resultPath);
+  const exists = await file.exists();
+  if (!exists) {
+    return c.json({ error: "not_found", message: "Result file not found." }, 404);
+  }
+
+  return new Response(file, {
+    headers: {
+      "Content-Type": "text/csv",
+      "Content-Disposition": `attachment; filename="${jobId}_results.csv"`
+    }
+  });
+});
+
 // ─── Internal IPN endpoint ────────────────────────────────
 
 const ipnBody = z.object({
@@ -600,6 +820,12 @@ async function startup() {
   }
 
   console.log(`[TRIANGULATE_API] listening on 0.0.0.0:${port}`);
+
+  // Start batch worker (Phase 4)
+  const { mkdirSync } = await import("node:fs");
+  const batchDir = process.env.BATCH_STORAGE_DIR ?? "/data/batch";
+  mkdirSync(batchDir, { recursive: true });
+  startBatchWorker();
 }
 
 startup();
