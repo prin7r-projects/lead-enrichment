@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
+import { decodeEmailFromOrderId } from "../../checkout/nowpayments/route";
+import { findPack } from "@/lib/pricing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,7 +10,9 @@ export const dynamic = "force-dynamic";
  * NOWPayments IPN webhook.
  *
  * Verifies x-nowpayments-sig as HMAC-SHA512 over the canonically-sorted JSON.
- * Reference: https://documenter.getpostman.com/view/7907941/2s93JusNJt
+ * On valid payment, extracts the customer email from order_id, calls the
+ * internal API to create customer + credit account + API key, then dispatches
+ * the API key email.
  */
 
 function sortObject(value: unknown): unknown {
@@ -33,6 +37,16 @@ function timingSafeEqualHex(left: string, right: string) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Extract packId from order_id.
+ * Format: triangulate_{packId}_{b64Email}_{ts}_{rnd}
+ */
+function packIdFromOrderId(orderId: string): string | null {
+  const parts = orderId.split("_");
+  if (parts.length < 4) return null;
+  return parts[1] ?? null;
 }
 
 export async function POST(req: Request) {
@@ -81,16 +95,97 @@ export async function POST(req: Request) {
   const orderId = String(payload.order_id ?? "");
   const paid = status === "finished" || status === "confirmed";
 
-  // Wave 2: log + ACK. Wave 3 persists into the credit ledger and triggers
-  // the API-key delivery email.
   console.log("[TRIANGULATE_NOWPAYMENTS_IPN] verified event", {
     orderId,
     paymentStatus: status,
-    paid,
-    payCurrency: payload.pay_currency,
-    actuallyPaidUsd: payload.actually_paid_at_fiat,
-    payAmount: payload.pay_amount
+    paid
   });
 
-  return NextResponse.json({ ok: true, verified: true, paid, orderId, status });
+  if (!paid) {
+    return NextResponse.json({ ok: true, verified: true, paid: false, orderId, status });
+  }
+
+  // ── Payment confirmed: create customer + credit account + API key ──
+  const email = decodeEmailFromOrderId(orderId);
+  const packId = packIdFromOrderId(orderId);
+  const pack = packId ? findPack(packId) : undefined;
+
+  if (!email) {
+    console.error("[TRIANGULATE_NOWPAYMENTS_IPN] Could not decode email from order_id:", orderId);
+    return NextResponse.json(
+      { error: "bad_order", message: "Could not decode email from order_id." },
+      { status: 400 }
+    );
+  }
+
+  if (!pack) {
+    console.error("[TRIANGULATE_NOWPAYMENTS_IPN] Unknown pack in order_id:", orderId);
+    return NextResponse.json(
+      { error: "unknown_pack", message: "Unknown credit pack in order_id." },
+      { status: 400 }
+    );
+  }
+
+  // Call the internal API to create customer + credits + API key
+  const apiBase = process.env.API_INTERNAL_URL?.trim() ?? "http://api:8080";
+  let apiKey: string | null = null;
+
+  try {
+    const ipnResponse = await fetch(`${apiBase}/v1/internal/ipn`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        orderId,
+        packId: pack.id,
+        email,
+        paymentStatus: status,
+        payCurrency: String(payload.pay_currency ?? ""),
+        payAmount: Number(payload.pay_amount ?? 0),
+        priceUsd: pack.priceUsd,
+        credits: pack.credits
+      })
+    });
+
+    const ipnData = await ipnResponse.json() as Record<string, unknown>;
+    apiKey = ipnData.apiKey as string | null;
+
+    if (!ipnResponse.ok) {
+      console.error("[TRIANGULATE_NOWPAYMENTS_IPN] Internal API error:", ipnData);
+      return NextResponse.json(
+        {
+          error: "internal_api_error",
+          message: "Failed to create customer record.",
+          detail: ipnData
+        },
+        { status: 502 }
+      );
+    }
+
+    console.log("[TRIANGULATE_NOWPAYMENTS_IPN] Customer created, credits granted", {
+      orderId,
+      email,
+      packId: pack.id,
+      credits: pack.credits
+    });
+  } catch (err) {
+    console.error("[TRIANGULATE_NOWPAYMENTS_IPN] Failed to reach internal API:", err);
+    return NextResponse.json(
+      {
+        error: "internal_api_unreachable",
+        message: "Could not reach the API service to create customer."
+      },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    verified: true,
+    paid: true,
+    orderId,
+    status,
+    email,
+    creditsGranted: pack.credits,
+    apiKeyDelivered: !!apiKey
+  });
 }

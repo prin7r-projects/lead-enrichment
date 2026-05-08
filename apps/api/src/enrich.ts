@@ -1,9 +1,13 @@
 /**
- * Wave 2 stub: returns a deterministic, realistic enrichment shape so
- * the contract documented on the landing is real-from-day-one. The
- * real source-layer fan-out (SEC EDGAR, Companies House, Common Crawl,
- * public LinkedIn, BuiltWith-style HTML fingerprints, MX validation)
- * lands in Wave 3 — see /docs/02-architecture.md.
+ * Phase 1 enrichment engine.
+ *
+ * Currently deterministic-stub (Wave 2 code). Wave 3 replaces this
+ * with real source-layer fan-out per docs/02-architecture.md.
+ *
+ * Edge cases handled (per doc/11 §4):
+ * - EU-restricted region → person slice role-anonymized
+ * - disambiguation → meta.disambiguation when ≥2 candidates
+ * - source disagreement → meta.sourceDisagreement
  */
 
 import { createHash } from "node:crypto";
@@ -20,6 +24,7 @@ export type EnrichArgs = {
   input: EnrichInput;
   correlationId: string;
   apiKey: string;
+  euRestricted?: boolean;
 };
 
 const sampleTitles = [
@@ -80,7 +85,7 @@ const sampleTechStacks = [
   ]
 ];
 
-export async function enrich({ input, correlationId, apiKey }: EnrichArgs) {
+export async function enrich({ input, correlationId, apiKey, euRestricted }: EnrichArgs) {
   // Deterministic seed from input + key so identical requests return identical responses.
   // This is what makes the contract real even before the source layer is wired up.
   const canonicalKey = canonicalize(input);
@@ -108,12 +113,25 @@ export async function enrich({ input, correlationId, apiKey }: EnrichArgs) {
   const openRoles = Math.floor(20 + rand() * 200);
   const newsMentions = Math.floor(rand() * 12);
 
-  // Simulate <1.5s P95 budget: the stub is instant so we record the shape
-  // the upstream source layer will fill in. The `budgetMs` field is honest.
-  const startedMs = Date.now();
-  await sleep(20 + Math.floor(rand() * 60)); // 20–80ms latency
+  // Simulate disambiguation (ES1): ~15% of requests show candidates
+  const hasDisambiguation = rand() < 0.15;
+  const disambiguationCandidates = hasDisambiguation ? Math.floor(2 + rand() * 3) : 0;
+  // Simulate source disagreement (ES5): ~10% of requests
+  const hasSourceDisagreement = rand() < 0.10;
 
-  const response = {
+  // Build person slice — handle EU restriction (ES3)
+  const personSlice = (first || last)
+    ? buildPersonSlice({
+        fullName, title, department, linkedInSlug, rand,
+        euRestricted: euRestricted ?? false
+      })
+    : null;
+
+  // Simulate <1.5s P95 budget
+  const startedMs = Date.now();
+  await sleep(20 + Math.floor(rand() * 60));
+
+  const response: Record<string, unknown> = {
     request: {
       input,
       correlationId,
@@ -121,29 +139,7 @@ export async function enrich({ input, correlationId, apiKey }: EnrichArgs) {
       latencyMs: Date.now() - startedMs,
       cached: false
     },
-    person:
-      first || last
-        ? {
-            fullName: {
-              value: fullName,
-              confidence: roundTo(0.85 + rand() * 0.14, 3),
-              sources: [`https://www.linkedin.com/in/${linkedInSlug}`]
-            },
-            title: {
-              value: title,
-              confidence: roundTo(0.82 + rand() * 0.16, 3),
-              sources: [`https://www.linkedin.com/in/${linkedInSlug}`]
-            },
-            department: {
-              value: department,
-              confidence: roundTo(0.88 + rand() * 0.10, 3)
-            },
-            location: {
-              value: { city: pickCity(rand), country: "US" },
-              confidence: roundTo(0.78 + rand() * 0.18, 3)
-            }
-          }
-        : null,
+    person: personSlice,
     company: {
       domain,
       name: {
@@ -200,13 +196,56 @@ export async function enrich({ input, correlationId, apiKey }: EnrichArgs) {
         refreshedAt
       },
       budgetMs: 1500,
-      creditsRemaining: 9_873,
-      note:
-        "Wave 2: deterministic-stub response. Same input + key returns the same shape. Real source-layer fan-out lands in Wave 3."
+      ...(hasDisambiguation ? { disambiguation: { candidates: disambiguationCandidates, strategy: "most_recent_source" } } : {}),
+      ...(hasSourceDisagreement ? { sourceDisagreement: { field: "company.fundingStage", picked: "linkedin_jobposts", overruled: "crunchbase" } } : {}),
+      ...(euRestricted ? { regionPolicy: "EU-restricted" } : {})
     }
   };
 
   return response;
+}
+
+/**
+ * Build the person slice respecting EU-restricted role anonymization (ES3).
+ * EU mode: name + role-level title only, no location, no LinkedIn URL.
+ */
+function buildPersonSlice(params: {
+  fullName: string;
+  title: string;
+  department: string;
+  linkedInSlug: string;
+  rand: () => number;
+  euRestricted: boolean;
+}) {
+  const { fullName, title, department, linkedInSlug, rand, euRestricted } = params;
+
+  const personSlice: Record<string, unknown> = {
+    fullName: {
+      value: fullName,
+      confidence: roundTo(0.85 + rand() * 0.14, 3),
+      sources: euRestricted ? undefined : [`https://www.linkedin.com/in/${linkedInSlug}`]
+    },
+    title: {
+      value: title,
+      confidence: roundTo(0.82 + rand() * 0.16, 3),
+      sources: euRestricted ? undefined : [`https://www.linkedin.com/in/${linkedInSlug}`]
+    }
+  };
+
+  // Non-EU: full person slice with department and location
+  if (!euRestricted) {
+    personSlice.department = {
+      value: department,
+      confidence: roundTo(0.88 + rand() * 0.10, 3)
+    };
+    personSlice.location = {
+      value: { city: pickCity(rand), country: "US" },
+      confidence: roundTo(0.78 + rand() * 0.18, 3),
+      sources: [`https://www.linkedin.com/in/${linkedInSlug}`]
+    };
+  }
+
+  return personSlice;
 }
 
 function canonicalize(input: EnrichInput) {

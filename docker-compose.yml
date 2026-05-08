@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: triangulate-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: triangulate
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-triangulate_dev}
+      POSTGRES_DB: triangulate
+    expose:
+      - "5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U triangulate -d triangulate"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   landing:
     build:
       context: .
@@ -39,6 +57,10 @@ services:
       PORT: "8080"
       HOSTNAME: "0.0.0.0"
       NODE_ENV: "production"
+      DATABASE_URL: postgresql://triangulate:${DB_PASSWORD:-triangulate_dev}@postgres:5432/triangulate
+    depends_on:
+      postgres:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       # Higher-priority router: matches /v1/* and /healthz on the same host.
@@ -47,3 +69,6 @@ services:
       - "traefik.http.routers.lead-enrichment-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lead-enrichment-api.priority=10"
       - "traefik.http.services.lead-enrichment-api.loadbalancer.server.port=8080"
+
+volumes:
+  pgdata:

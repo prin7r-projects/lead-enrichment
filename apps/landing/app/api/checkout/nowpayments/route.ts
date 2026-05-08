@@ -4,20 +4,41 @@ import { findPack } from "@/lib/pricing";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type Body = { packId?: string };
+type Body = { packId?: string; email?: string };
 
 function appUrl(req: Request) {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
-  // Fall back to the request origin (works on the deploy target).
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
 }
 
-function orderId(packId: string) {
+/**
+ * Encode the customer email into the order_id so the IPN handler
+ * can retrieve it without a separate DB lookup.
+ *
+ * Format: triangulate_{packId}_{b64Email}_{ts}_{rnd}
+ * Max order_id length is 255 chars (NOWPayments limit).
+ */
+function orderId(packId: string, email: string) {
   const ts = Date.now().toString(36);
   const rnd = Math.random().toString(36).slice(2, 8);
-  return `triangulate_${packId}_${ts}_${rnd}`;
+  const b64Email = Buffer.from(email.trim().toLowerCase()).toString("base64url");
+  return `triangulate_${packId}_${b64Email}_${ts}_${rnd}`;
+}
+
+/**
+ * Decode customer email from the order_id.
+ */
+export function decodeEmailFromOrderId(orderId: string): string | null {
+  const parts = orderId.split("_");
+  // triangulate_packId_b64email_ts_rnd
+  if (parts.length < 4) return null;
+  try {
+    return Buffer.from(parts[2], "base64url").toString("utf-8");
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: Request) {
@@ -39,12 +60,19 @@ export async function POST(req: Request) {
     );
   }
 
+  // Require email for credit issuance
+  const email = body.email?.trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    return NextResponse.json(
+      { error: "missing_email", message: "An email address is required to receive your API key after payment." },
+      { status: 400 }
+    );
+  }
+
   const apiKey = process.env.NOWPAYMENTS_API_KEY?.trim();
   const base = appUrl(req);
-  const id = orderId(pack.id);
+  const id = orderId(pack.id, email);
 
-  // Graceful "missing_env" path: the landing UI shows an honest message
-  // ("Crypto checkout is paused…") instead of pretending the click worked.
   if (!apiKey) {
     return NextResponse.json(
       {

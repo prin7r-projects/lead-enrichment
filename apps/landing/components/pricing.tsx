@@ -60,15 +60,24 @@ function PricingCard({
 }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [email, setEmail] = React.useState("");
 
   async function startCheckout() {
     setLoading(true);
     setError(null);
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) {
+      setError("Enter your email to receive your API key after payment.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/checkout/nowpayments", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ packId: pack.id })
+        body: JSON.stringify({ packId: pack.id, email: trimmedEmail })
       });
       const data = (await res.json()) as { invoiceUrl?: string; error?: string; message?: string };
       if (data.invoiceUrl) {
@@ -132,6 +141,21 @@ function PricingCard({
       </ul>
 
       <div className="mt-auto flex flex-col gap-2">
+        <div>
+          <label htmlFor={`email-${pack.id}`} className="sr-only">
+            Email for API key delivery
+          </label>
+          <input
+            id={`email-${pack.id}`}
+            type="email"
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-md border border-border bg-porcelain px-3 py-2 font-mono text-[13px] text-midnight placeholder:text-ghost focus:border-violet focus:outline-none focus:ring-1 focus:ring-violet"
+            aria-label="Email address to receive your API key"
+            autoComplete="email"
+          />
+        </div>
         <Button
           variant={highlighted ? "primary" : "secondary"}
           size="lg"
