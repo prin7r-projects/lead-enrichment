@@ -1,0 +1,11 @@
+{
+  "name": "triangulate-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "node --test run-tests.mjs",
+    "test:e2e:api": "node --test --test-name-pattern='^(?!Landing page|Anti-scenario)' run-tests.mjs",
+    "test:e2e:landing": "node --test --test-name-pattern='Landing page|Anti-scenario' run-tests.mjs"
+  }
+}
