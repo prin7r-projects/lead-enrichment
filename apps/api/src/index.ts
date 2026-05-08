@@ -1,8 +1,8 @@
 /**
  * Triangulate API — Hono + Bun server.
  *
- * Phase 1: Real auth, credit ledger, rate limiting, caching,
- * NOWPayments IPN → credits, GDPR region policy, free-mail exclusion.
+ * Phase 3: Webhook-fired enrichment, API key management, dashboard foundation.
+ * Phase 1-2: Auth, credit ledger, rate limiting, caching, GDPR, PII purge, IPN.
  */
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -57,7 +57,7 @@ app.get("/healthz", (c) =>
   c.json({
     status: "ok",
     service: "triangulate-api",
-    version: "0.2.0",
+    version: "0.3.0",
     ts: Date.now()
   })
 );
