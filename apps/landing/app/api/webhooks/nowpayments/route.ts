@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { decodeEmailFromOrderId } from "../../checkout/nowpayments/route";
+import { decodeEmailFromOrderId, packIdFromOrderId } from "@/lib/order-id";
 import { findPack } from "@/lib/pricing";
 
 export const runtime = "nodejs";
@@ -39,15 +39,7 @@ function timingSafeEqualHex(left: string, right: string) {
   }
 }
 
-/**
- * Extract packId from order_id.
- * Format: triangulate_{packId}_{b64Email}_{ts}_{rnd}
- */
-function packIdFromOrderId(orderId: string): string | null {
-  const parts = orderId.split("_");
-  if (parts.length < 4) return null;
-  return parts[1] ?? null;
-}
+
 
 export async function POST(req: Request) {
   const raw = await req.text();

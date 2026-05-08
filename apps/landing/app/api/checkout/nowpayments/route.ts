@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { findPack } from "@/lib/pricing";
+import { encodeOrderId } from "@/lib/order-id";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,34 +12,6 @@ function appUrl(req: Request) {
   if (fromEnv) return fromEnv.replace(/\/$/, "");
   const url = new URL(req.url);
   return `${url.protocol}//${url.host}`;
-}
-
-/**
- * Encode the customer email into the order_id so the IPN handler
- * can retrieve it without a separate DB lookup.
- *
- * Format: triangulate_{packId}_{b64Email}_{ts}_{rnd}
- * Max order_id length is 255 chars (NOWPayments limit).
- */
-function orderId(packId: string, email: string) {
-  const ts = Date.now().toString(36);
-  const rnd = Math.random().toString(36).slice(2, 8);
-  const b64Email = Buffer.from(email.trim().toLowerCase()).toString("base64url");
-  return `triangulate_${packId}_${b64Email}_${ts}_${rnd}`;
-}
-
-/**
- * Decode customer email from the order_id.
- */
-export function decodeEmailFromOrderId(orderId: string): string | null {
-  const parts = orderId.split("_");
-  // triangulate_packId_b64email_ts_rnd
-  if (parts.length < 4) return null;
-  try {
-    return Buffer.from(parts[2], "base64url").toString("utf-8");
-  } catch {
-    return null;
-  }
 }
 
 export async function POST(req: Request) {
@@ -71,7 +44,7 @@ export async function POST(req: Request) {
 
   const apiKey = process.env.NOWPAYMENTS_API_KEY?.trim();
   const base = appUrl(req);
-  const id = orderId(pack.id, email);
+  const id = encodeOrderId(pack.id, email);
 
   if (!apiKey) {
     return NextResponse.json(
