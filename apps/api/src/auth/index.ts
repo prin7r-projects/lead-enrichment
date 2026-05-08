@@ -81,20 +81,20 @@ export async function validateApiKey(rawKey: string): Promise<AuthContext | null
   if (!row) return null;
 
   // Reject revoked keys.
-  if (row.key_status !== "active") return null;
+  if (row.keyStatus !== "active") return null;
 
   // Reject expired keys.
-  if (row.expires_at && new Date(row.expires_at as string) < new Date()) return null;
+  if (row.expiresAt && new Date(row.expiresAt as string) < new Date()) return null;
 
   // Update last_used_at asynchronously (don't block the request).
-  sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${row.key_id as string}`.catch(err =>
+  sql`UPDATE api_keys SET last_used_at = now() WHERE id = ${row.keyId as string}`.catch(err =>
     console.error("[AUTH] Failed to update last_used_at:", err)
   );
 
   return {
-    keyId: row.key_id as string,
-    customerId: row.customer_id as string,
-    accountId: row.account_id as string,
+    keyId: row.keyId as string,
+    customerId: row.customerId as string,
+    accountId: row.accountId as string,
     tier: (row.tier as string) ?? "starter",
     balance: (row.balance as number) ?? 0
   };

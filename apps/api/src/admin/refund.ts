@@ -61,22 +61,22 @@ async function main() {
     process.exit(1);
   }
 
-  if (payment.payment_status !== "finished" && payment.payment_status !== "confirmed") {
-    console.error(`ERROR: Payment status is "${payment.payment_status}" — can only refund completed payments.`);
+  if (payment.paymentStatus !== "finished" && payment.paymentStatus !== "confirmed") {
+    console.error(`ERROR: Payment status is "${payment.paymentStatus}" — can only refund completed payments.`);
     process.exit(1);
   }
 
-  if (!payment.account_id) {
+  if (!payment.accountId) {
     console.error("ERROR: No credit account linked to this payment.");
     process.exit(1);
   }
 
-  const accountId = payment.account_id as string;
+  const accountId = payment.accountId as string;
   const totalCredits = payment.credits as number;
-  const priceUsd = Number(payment.price_usd);
-  const currentBalance = payment.current_balance as number;
+  const priceUsd = Number(payment.priceUsd);
+  const currentBalance = payment.currentBalance as number;
   const unusedCredits = currentBalance;
-  const customerEmail = (payment.customer_email as string) ?? "unknown";
+  const customerEmail = (payment.customerEmail as string) ?? "unknown";
 
   if (currentBalance <= 0) {
     console.error("ERROR: No unused credits remaining. Nothing to refund.");
@@ -91,7 +91,7 @@ async function main() {
   console.log("══════════════════════════════════════════════");
   console.log(`  Order ID:     ${orderId}`);
   console.log(`  Customer:     ${customerEmail}`);
-  console.log(`  Pack:         ${payment.pack_id}`);
+  console.log(`  Pack:         ${payment.packId}`);
   console.log(`  Total credits: ${totalCredits}`);
   console.log(`  Used credits:  ${totalCredits - unusedCredits}`);
   console.log(`  Unused:        ${unusedCredits}`);
@@ -126,12 +126,12 @@ async function main() {
       // Create refund record
       await tx`
         INSERT INTO refunds (payment_id, amount_usd, reason)
-        VALUES (${payment.payment_id as string}, ${proratedUsd}, ${values.reason})
+        VALUES (${payment.paymentId as string}, ${proratedUsd}, ${values.reason})
       `;
 
       // Update payment status
       await tx`
-        UPDATE payments SET payment_status = 'refunded' WHERE id = ${payment.payment_id as string}
+        UPDATE payments SET payment_status = 'refunded' WHERE id = ${payment.paymentId as string}
       `;
     });
 
