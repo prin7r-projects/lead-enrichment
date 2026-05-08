@@ -12,3 +12,4 @@ build/
 .vscode/
 .idea/
 docs/screenshots/.thumbnails/
+package-lock.json
